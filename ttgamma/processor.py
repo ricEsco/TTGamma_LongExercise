@@ -1,7 +1,9 @@
 import time
 
 import coffea.processor as processor
-from coffea import hist
+#from coffea import hist
+#coffea hist deprecated in favor of
+import hist
 from coffea.analysis_tools import PackedSelection, Weights
 from coffea.nanoevents import NanoAODSchema, NanoEventsFactory
 from coffea.nanoevents.methods import nanoaod
@@ -230,78 +232,69 @@ class TTGammaProcessor(processor.ProcessorABC):
         ak.behavior.update(nanoaod.behavior)
 
         self.isMC = isMC
+        
+        dataset_axis = hist.axis.StrCategory([], name="dataset", label="Dataset", growth=True)
+        lep_axis = hist.axis.StrCategory([], name="lepFlavor", label="Lepton flavor", growth=True)
 
-        dataset_axis = hist.Cat("dataset", "Dataset")
-        lep_axis = hist.Cat("lepFlavor", "Lepton Flavor")
+        systematic_axis = hist.axis.StrCategory([], name="systematic", label="Systematic uncertainty", growth=True)
 
-        systematic_axis = hist.Cat("systematic", "Systematic Uncertainty")
-
-        m3_axis = hist.Bin("M3", r"$M_3$ [GeV]", 200, 0.0, 1000)
-        mass_axis = hist.Bin("mass", r"$m_{\ell\gamma}$ [GeV]", 400, 0.0, 400)
-        pt_axis = hist.Bin("pt", r"$p_{T}$ [GeV]", 200, 0.0, 1000)
-        eta_axis = hist.Bin("eta", r"$\eta_{\gamma}$", 300, -1.5, 1.5)
-        chIso_axis = hist.Bin(
-            "chIso", r"Charged Hadron Isolation", np.arange(-0.1, 20.001, 0.05)
-        )
+        m3_axis = hist.axis.Regular(200, 0.0, 1000, name="M3", label=r"$M_3$ [GeV]")
+        mass_axis = hist.axis.Regular(400, 0.0, 400, name="mass", label=r"$m_{\ell\gamma}$ [GeV]")
+        pt_axis = hist.axis.Regular(200, 0.0, 1000, name="pt", label=r"$p_{T}$ [GeV]")
+        eta_axis = hist.axis.Regular(300, -1.5, 1.5, name="eta", label=r"$\eta_{\gamma}$")
+        chIso_axis = hist.axis.Regular(400, -0.1, 20.001, name="chIso", label=r"Charged Hadron Isolation")
 
         ## Define axis to keep track of photon category
-        phoCategory_axis = hist.Bin("category", r"Photon Category", [1, 2, 3, 4, 5])
-        phoCategory_axis.identifiers()[0].label = "Genuine Photon"
-        phoCategory_axis.identifiers()[1].label = "Misidentified Electron"
-        phoCategory_axis.identifiers()[2].label = "Hadronic Photon"
-        phoCategory_axis.identifiers()[3].label = "Hadronic Fake"
+        phoCategory_axis = hist.axis.IntCategory([1, 2, 3, 4, 5], name="category", label=r"Photon Category")
+        #phoCategory_axis.identifiers()[0].label = "Genuine Photon"
+        #phoCategory_axis.identifiers()[1].label = "Misidentified Electron"
+        #phoCategory_axis.identifiers()[2].label = "Hadronic Photon"
+        #phoCategory_axis.identifiers()[3].label = "Hadronic Fake"
+        
+        self.make_output = lambda: {
 
-        ### Accumulator for holding histograms
-        self._accumulator = processor.dict_accumulator(
-            {
-                # Test histogram; not needed for final analysis but useful to check things are working
-                "all_photon_pt": hist.Hist("Counts", dataset_axis, pt_axis),
-                ## book histograms for photon pt, eta, and charged hadron isolation
-                "photon_pt": hist.Hist(
-                    "Counts",
-                    dataset_axis,
-                    pt_axis,
-                    phoCategory_axis,
-                    lep_axis,
-                    systematic_axis,
-                ),
-                "photon_eta": hist.Hist(
-                    "Counts",
-                    dataset_axis,
-                    eta_axis,
-                    phoCategory_axis,
-                    lep_axis,
-                    systematic_axis,
-                ),  # FIXME 3
-                "photon_chIso": hist.Hist(
-                    "Counts",
-                    dataset_axis,
-                    chIso_axis,
-                    phoCategory_axis,
-                    lep_axis,
-                    systematic_axis,
-                ),
-                ## book histogram for photon/lepton mass in a 3j0t region
-                "photon_lepton_mass_3j0t": hist.Hist(
-                    "Counts",
-                    dataset_axis,
-                    mass_axis,
-                    phoCategory_axis,
-                    lep_axis,
-                    systematic_axis,
-                ),
-                ## book histogram for M3 variable
-                "M3": hist.Hist(
-                    "Counts",
-                    dataset_axis,
-                    m3_axis,
-                    phoCategory_axis,
-                    lep_axis,
-                    systematic_axis,
-                ),
-                "EventCount": processor.value_accumulator(int),
-            }
-        )
+            # Test histogram; not needed for final analysis but useful to check things are working
+            "all_photon_pt": hist.Hist(dataset_axis, pt_axis),
+            ## book histograms for photon pt, eta, and charged hadron isolation
+            "photon_pt": hist.Hist(
+                dataset_axis,
+                pt_axis,
+                phoCategory_axis,
+                lep_axis,
+                systematic_axis,
+            ),
+            "photon_eta": hist.Hist(
+                dataset_axis,
+                eta_axis,
+                phoCategory_axis,
+                lep_axis,
+                systematic_axis,
+            ),  # FIXME 3
+            "photon_chIso": hist.Hist(
+                dataset_axis,
+                chIso_axis,
+                phoCategory_axis,
+                lep_axis,
+                systematic_axis,
+            ),
+            ## book histogram for photon/lepton mass in a 3j0t region
+            "photon_lepton_mass_3j0t": hist.Hist(
+                dataset_axis,
+                mass_axis,
+                phoCategory_axis,
+                lep_axis,
+                systematic_axis,
+            ),
+            ## book histogram for M3 variable
+            "M3": hist.Hist(
+                dataset_axis,
+                m3_axis,
+                phoCategory_axis,
+                lep_axis,
+                systematic_axis,
+            ),
+            "EventCount": processor.value_accumulator(int),
+        }
 
     @property
     def accumulator(self):
@@ -323,21 +316,14 @@ class TTGammaProcessor(processor.ProcessorABC):
             maxParentFlatten = maxHistoryPDGID(idx, par, num)
             events["GenPart", "maxParent"] = ak.unflatten(maxParentFlatten, num)
 
+        shift_systs = [None]
         if self.isMC:
-            output = self.accumulator.identity()
-            shift_systs = [None, "JESUp", "JESDown", "JERUp", "JERDown"]
-            for _syst in shift_systs:
-                output += self.process_shift(events, _syst)
-        else:
-            # data doesn't need each systematic shift to be processed
-            output = self.process_shift(events, "nominal")
-
-        # only add events up once
-        output["EventCount"] += len(events)
-        return output
+            shift_systs += ["JESUp", "JESDown", "JERUp", "JERDown"]
+            
+        return processor.accumulate(self.process_shift(events, name) for name in shift_systs)
 
     def process_shift(self, events, shift_syst=None):
-        output = self.accumulator.identity()
+        output = self.make_output()
 
         dataset = events.metadata["dataset"]
 
@@ -824,6 +810,9 @@ class TTGammaProcessor(processor.ProcessorABC):
 
             # find the event weight to be used when filling the histograms
             weightSyst = syst
+            
+            if syst == "nominal":
+                output["EventCount"] += len(events)
 
             # in the case of 'nominal', or the jet energy systematics, no weight systematic variation is used (weightSyst=None)
             if syst in ["nominal", "JERUp", "JERDown", "JESUp", "JESDown"]:
