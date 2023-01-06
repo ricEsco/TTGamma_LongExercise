@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from cycler import cycler
-from coffea import hist
+import hist
 import numpy as np
 
 
@@ -185,22 +185,22 @@ def plotWithRatio(
         transform=ax.transAxes,
     )
 
-
 def SetRangeHist(histogram, axisName, lower_bound=None, upper_bound=None):
-    old_axis = histogram.axis(axisName)
-    lower_idx, upper_idx = None, None
-    if not lower_bound is None:
-        lower_idx = np.where(old_axis.edges() >= lower_bound)[0][0]
-    if not upper_bound is None:
-        upper_idx = np.where(old_axis.edges() <= upper_bound)[0][-1] + 1
-
-    new_axis = hist.Bin(
-        old_axis.name, old_axis.label, old_axis.edges()[lower_idx:upper_idx]
-    )
-    return histogram.rebin(axisName, new_axis)
-
+    s = hist.tag.Slicer()
+    return histogram[{axisName:s[lower_bound:upper_bound]}]
 
 def RebinHist(histogram, axisName, rebinN=1):
-    old_axis = histogram.axis(axisName)
-    new_axis = hist.Bin(old_axis.name, old_axis.label, old_axis.edges()[::rebinN])
-    return histogram.rebin(axisName, new_axis)
+    s = hist.tag.Slicer()
+    return histogram[{axisName:s[::hist.rebin(rebinN)]}]
+
+# Thanks for this, Andrzej ;)
+def GroupBy(h, oldname, newname, grouping):
+    hnew = hist.Hist(
+        hist.axis.StrCategory(grouping, name=newname),
+        *(ax for ax in h.axes if ax.name != oldname),
+        storage=h._storage_type,
+    )
+    for i, indices in enumerate(grouping.values()):
+        hnew.view(flow=True)[i] = h[{oldname: indices}][{oldname: sum}].view(flow=True)
+
+    return hnew

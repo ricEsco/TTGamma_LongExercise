@@ -233,7 +233,7 @@ class TTGammaProcessor(processor.ProcessorABC):
 
         self.isMC = isMC
         
-        dataset_axis = hist.axis.StrCategory([], name="dataset", label="Dataset", growth=True)
+#        dataset_axis = hist.axis.StrCategory([], name="dataset", label="Dataset", growth=True)
         lep_axis = hist.axis.StrCategory([], name="lepFlavor", label="Lepton flavor", growth=True)
 
         systematic_axis = hist.axis.StrCategory([], name="systematic", label="Systematic uncertainty", growth=True)
@@ -254,24 +254,26 @@ class TTGammaProcessor(processor.ProcessorABC):
         self.make_output = lambda: {
 
             # Test histogram; not needed for final analysis but useful to check things are working
-            "all_photon_pt": hist.Hist(dataset_axis, pt_axis),
+            "all_photon_pt": hist.Hist(
+#                dataset_axis, 
+                pt_axis),
             ## book histograms for photon pt, eta, and charged hadron isolation
             "photon_pt": hist.Hist(
-                dataset_axis,
+#                dataset_axis,
                 pt_axis,
                 phoCategory_axis,
                 lep_axis,
                 systematic_axis,
             ),
             "photon_eta": hist.Hist(
-                dataset_axis,
+#                dataset_axis,
                 eta_axis,
                 phoCategory_axis,
                 lep_axis,
                 systematic_axis,
             ),  # FIXME 3
             "photon_chIso": hist.Hist(
-                dataset_axis,
+#                dataset_axis,
                 chIso_axis,
                 phoCategory_axis,
                 lep_axis,
@@ -279,7 +281,7 @@ class TTGammaProcessor(processor.ProcessorABC):
             ),
             ## book histogram for photon/lepton mass in a 3j0t region
             "photon_lepton_mass_3j0t": hist.Hist(
-                dataset_axis,
+#                dataset_axis,
                 mass_axis,
                 phoCategory_axis,
                 lep_axis,
@@ -287,7 +289,7 @@ class TTGammaProcessor(processor.ProcessorABC):
             ),
             ## book histogram for M3 variable
             "M3": hist.Hist(
-                dataset_axis,
+#                dataset_axis,
                 m3_axis,
                 phoCategory_axis,
                 lep_axis,
@@ -295,10 +297,6 @@ class TTGammaProcessor(processor.ProcessorABC):
             ),
             "EventCount": processor.value_accumulator(int),
         }
-
-    @property
-    def accumulator(self):
-        return self._accumulator
 
     def process(self, events):
         ## Here we pre-compute a few common variables that we will re-use later and add them to the events object
@@ -333,7 +331,8 @@ class TTGammaProcessor(processor.ProcessorABC):
         # Remember not to fill it if we are in a shift systematic though
         if shift_syst is None:
             output["all_photon_pt"].fill(
-                dataset=dataset, pt=ak.flatten(events.Photon.pt)
+#                dataset=dataset, 
+                pt=ak.flatten(events.Photon.pt)
             )
 
         #################
@@ -845,7 +844,7 @@ class TTGammaProcessor(processor.ProcessorABC):
                 # Because of this, we have to use np.asarray(...) since coffea.hist can only accept numpy-compatible arrays
 
                 output["photon_pt"].fill(
-                    dataset=dataset,
+#                    dataset=dataset,
                     pt=np.asarray(leadingPhoton.pt[phosel]),
                     category=np.asarray(phoCategory[phosel]),
                     lepFlavor=lepton,
@@ -854,7 +853,7 @@ class TTGammaProcessor(processor.ProcessorABC):
                 )
 
                 output["photon_eta"].fill(
-                    dataset=dataset,
+#                    dataset=dataset,
                     eta=np.asarray(leadingPhoton.eta[phosel]),
                     category=np.asarray(phoCategory[phosel]),
                     lepFlavor=lepton,
@@ -865,7 +864,7 @@ class TTGammaProcessor(processor.ProcessorABC):
 
                 # fill photon_chIso histogram, using the loosePhotons array (photons passing all cuts, except the charged hadron isolation cuts)
                 output["photon_chIso"].fill(
-                    dataset=dataset,
+#                    dataset=dataset,
                     chIso=np.asarray(leadingPhotonLoose.chIso[phoselLoose]),
                     category=np.asarray(phoCategoryLoose[phoselLoose]),
                     lepFlavor=lepton,
@@ -875,7 +874,7 @@ class TTGammaProcessor(processor.ProcessorABC):
 
                 # fill M3 histogram, for events passing the phosel selection
                 output["M3"].fill(
-                    dataset=dataset,
+#                    dataset=dataset,
                     M3=np.asarray(ak.flatten(M3[phosel])),
                     category=np.asarray(phoCategory[phosel]),
                     lepFlavor=lepton,
@@ -892,7 +891,7 @@ class TTGammaProcessor(processor.ProcessorABC):
 
             for lepton in phosel_3j0t.keys():
                 output["photon_lepton_mass_3j0t"].fill(
-                    dataset=dataset,
+#                    dataset=dataset,
                     mass=np.asarray(gammaMasses[lepton][phosel_3j0t[lepton]]),
                     category=np.asarray(phoCategory[phosel_3j0t[lepton]]),
                     lepFlavor=lepton,
@@ -901,7 +900,7 @@ class TTGammaProcessor(processor.ProcessorABC):
                 )
             # output["photon_lepton_mass_3j0t"].fill()  # FIXME 3
 
-        return output
+        return {dataset: output}
 
     def postprocess(self, accumulator):
         return accumulator

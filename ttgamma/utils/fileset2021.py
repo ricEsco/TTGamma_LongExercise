@@ -112,7 +112,7 @@ fileset = {
         f"{prefix}/DYjetsM50_ext2_2016_skim_4of5.root",
         f"{prefix}/DYjetsM50_ext2_2016_skim_5of5.root",
     ],
-    "GJets_HT100To200": [
+    "GJets": [
         f"{prefix}/GJets_HT100To200_2016_skim.root",
         f"{prefix}/GJets_HT100To200_ext1_2016_skim.root",
         f"{prefix}/GJets_HT200To400_2016_skim.root",

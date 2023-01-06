@@ -50,7 +50,7 @@ if __name__ == "__main__":
         choices=list(mc_group_mapping) + ["Data"],
         help="Name of process to run",
     )
-    parser.add_argument("--chunksize", type=int, default=100000, help="Chunk size")
+    parser.add_argument("--chunksize", type=int, default=10000, help="Chunk size")
     parser.add_argument("--maxchunks", type=int, default=None, help="Max chunks")
     parser.add_argument("--workers", type=int, default=1, help="Number of workers")
     parser.add_argument("--outdir", type=str, default="Outputs", help="Where to put the output files")
@@ -89,7 +89,7 @@ if __name__ == "__main__":
             print("Are you sure you want to use only one worker?")
         cluster = LPCCondorCluster(
             transfer_input_files="ttgamma",
-            log_directory="/uscms/home/ncsmith/dask_logs",
+#            log_directory="/uscms/home/ncsmith/dask_logs",
         )
         cluster.adapt(minimum=1, maximum=args.workers)
         executor = processor.DaskExecutor(client=Client(cluster), status=not args.batch)
@@ -117,29 +117,28 @@ if __name__ == "__main__":
         )
 
         # Compute original number of events for normalization
-        output["InputEventCount"] = processor.defaultdict_accumulator(int)
+#        output["InputEventCount"] = processor.defaultdict_accumulator(int)
         lumi_sfs = {}
         for dataset_name, dataset_files in job_fileset.items():
+            output[dataset_name]["InputEventCount"] = processor.value_accumulator(int)
             for filename in dataset_files:
                 with uproot.open(filename) as fhandle:
-                    output["InputEventCount"][dataset_name] += (
-                        fhandle["hEvents"].values()[2] - fhandle["hEvents"].values()[0]
-                    )
+                    output[dataset_name]["InputEventCount"] += fhandle["hEvents"].values()[2] - fhandle["hEvents"].values()[0]
 
             # Calculate luminosity scale factor
-            lumi_sfs[dataset_name] = (
+            lumi_sf = (
                 crossSections[dataset_name]
                 * lumis[2016]
-                / output["InputEventCount"][dataset_name]
+                / output[dataset_name]["InputEventCount"].value
             )
 
-        for key, obj in output.items():
-            if isinstance(obj, hist.Hist):
-                obj.scale(lumi_sfs, axis="dataset")
+            for key, obj in output[dataset_name].items():
+                if isinstance(obj, hist.Hist):
+                    obj.scale(lumi_sf)
 
     elapsed = time.time() - tstart
     print(f"Total time: {elapsed:.1f} seconds")
-    print("Total rate: %.1f events / second" % (output["EventCount"].value / elapsed))
+#    print("Total rate: %.1f events / second" % (output["EventCount"].value / elapsed))
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     outfile = os.path.join(args.outdir, f"output_{args.mcGroup}_run{timestamp}.coffea")
