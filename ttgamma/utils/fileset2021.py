@@ -112,15 +112,23 @@ fileset = {
         f"{prefix}/DYjetsM50_ext2_2016_skim_4of5.root",
         f"{prefix}/DYjetsM50_ext2_2016_skim_5of5.root",
     ],
-    "GJets": [
+    "GJets_HT100To200": [
         f"{prefix}/GJets_HT100To200_2016_skim.root",
         f"{prefix}/GJets_HT100To200_ext1_2016_skim.root",
+    ],
+    "GJets_HT200To400": [
         f"{prefix}/GJets_HT200To400_2016_skim.root",
         f"{prefix}/GJets_HT200To400_ext1_2016_skim.root",
+    ],
+    "GJets_HT400TO600": [
         f"{prefix}/GJets_HT400To600_2016_skim.root",
         f"{prefix}/GJets_HT400To600_ext1_2016_skim.root",
+    ],
+    "GJets_HT40To100": [
         f"{prefix}/GJets_HT40To100_2016_skim.root",
         f"{prefix}/GJets_HT40To100_ext1_2016_skim.root",
+    ],
+    "GJets_HT600ToInf": [
         f"{prefix}/GJets_HT600ToInf_2016_skim.root",
         f"{prefix}/GJets_HT600ToInf_ext1_2016_skim.root",
     ],
