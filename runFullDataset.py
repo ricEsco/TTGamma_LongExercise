@@ -2,7 +2,8 @@
 import uproot
 import datetime
 import logging
-from coffea import util, processor, hist
+import hist
+from coffea import util, processor
 from coffea.nanoevents import NanoAODSchema
 from ttgamma import TTGammaProcessor
 from ttgamma.utils.fileset2021 import fileset
@@ -120,21 +121,23 @@ if __name__ == "__main__":
 #        output["InputEventCount"] = processor.defaultdict_accumulator(int)
         lumi_sfs = {}
         for dataset_name, dataset_files in job_fileset.items():
-            output[dataset_name]["InputEventCount"] = processor.value_accumulator(int)
             for filename in dataset_files:
+                output[dataset_name]["InputEventCount"] = processor.value_accumulator(int)
                 with uproot.open(filename) as fhandle:
-                    output[dataset_name]["InputEventCount"] += fhandle["hEvents"].values()[2] - fhandle["hEvents"].values()[0]
-
+                    output[dataset_name]["InputEventCount"] += (
+                        fhandle["hEvents"].values()[2] - fhandle["hEvents"].values()[0]
+                    )
+                    
             # Calculate luminosity scale factor
             lumi_sf = (
                 crossSections[dataset_name]
                 * lumis[2016]
                 / output[dataset_name]["InputEventCount"].value
             )
-
+            
             for key, obj in output[dataset_name].items():
                 if isinstance(obj, hist.Hist):
-                    obj.scale(lumi_sf)
+                    obj *= lumi_sf
 
     elapsed = time.time() - tstart
     print(f"Total time: {elapsed:.1f} seconds")
