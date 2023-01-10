@@ -193,18 +193,6 @@ def GroupBy2(h, oldname, newname, grouping):
 
     return hnew
 
-def SelectAxis(histogram, axisNames, to_select):
-    selection_dict = {}
-    axis_dict = {}
-
-    for i, axis in enumerate(axisNames):
-        bins = histogram.axes[axis]
-        j = bins.index(to_select[i])
-        selection_dict[axis] = j
-        axis_dict[axis] = sum
-
-    return histogram[selection_dict][axis_dict]
-
 def plotWithRatio(
     h,
     hData,

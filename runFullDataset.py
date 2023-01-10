@@ -118,11 +118,10 @@ if __name__ == "__main__":
         )
 
         # Compute original number of events for normalization
-#        output["InputEventCount"] = processor.defaultdict_accumulator(int)
         lumi_sfs = {}
         for dataset_name, dataset_files in job_fileset.items():
+            output[dataset_name]["InputEventCount"] = processor.value_accumulator(int)
             for filename in dataset_files:
-                output[dataset_name]["InputEventCount"] = processor.value_accumulator(int)
                 with uproot.open(filename) as fhandle:
                     output[dataset_name]["InputEventCount"] += (
                         fhandle["hEvents"].values()[2] - fhandle["hEvents"].values()[0]
