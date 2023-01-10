@@ -182,17 +182,6 @@ def GroupBy(h, oldname, newname, grouping):
 
     return hnew
 
-def GroupBy2(h, oldname, newname, grouping):
-    hnew = hist.Hist(
-        hist.axis.StrCategory(grouping, name=newname),
-        *(ax for ax in h.axes if ax.name != oldname),
-        storage=h._storage_type,
-    )
-    for i, indices in enumerate(grouping.values()):
-        hnew.view(flow=True)[i] = h[{oldname: indices}].view(flow=True)
-
-    return hnew
-
 def plotWithRatio(
     h,
     hData,
@@ -246,7 +235,40 @@ def plotWithRatio(
         ax=ax,
         stack=stacked,
         histtype='fill',
-        binwnorm=binwnorm
+        binwnorm=binwnorm,
+        edgecolor='black',
+        linewidth=1,
+    )
+    
+    if binwnorm:
+        
+        mcStatUp = np.append((h[{overlay:sum}].values() + np.sqrt(h[{overlay:sum}].variances()))/np.diff(hData.axes[0].edges),[0])
+        mcStatDo = np.append((h[{overlay:sum}].values() - np.sqrt(h[{overlay:sum}].variances()))/np.diff(hData.axes[0].edges),[0])
+    
+        uncertainty_band = ax.fill_between(
+            hData.axes[0].edges,
+            mcStatUp,
+            mcStatDo,
+            step='post',
+            hatch='///',
+            facecolor='none',
+            edgecolor='gray',
+            linewidth=0,
+    )
+    else:
+        
+        mcStatUp = np.append(h[{overlay:sum}].values() + np.sqrt(h[{overlay:sum}].variances()),[0])
+        mcStatDo = np.append(h[{overlay:sum}].values() - np.sqrt(h[{overlay:sum}].variances()),[0])
+    
+        uncertainty_band = ax.fill_between(
+            hData.axes[0].edges,
+            mcStatUp,
+            mcStatDo,
+            step='post',
+            hatch='///',
+            facecolor='none',
+            edgecolor='gray',
+            linewidth=0,
     )
 
     if not hData is None:
@@ -254,18 +276,18 @@ def plotWithRatio(
         if binwnorm:
             ax.errorbar(x=hData.axes[0].centers,
                         y=hData.values()/np.diff(hData.axes[0].edges),
-                        yerr=hist.intervals.poisson_interval(hData.values())/np.diff(hData.axes[0].edges),
+                        yerr=np.sqrt(hData.values())/np.diff(hData.axes[0].edges),
                         color='black',
                         marker='.',
                         markersize=10,
                         linewidth=0,
-                        elinewidth=1,
+                        elinewidth=0.5,
                         label="Data",
             )
         else:
             ax.errorbar(x=hData.axes[0].centers,
                         y=hData.values(),
-                        yerr=hist.intervals.poisson_interval(hData.values()),
+                        yerr=np.sqrt(hData.values()),
                         color='black',
                         marker='.',
                         markersize=10,
@@ -300,6 +322,18 @@ def plotWithRatio(
     if not leg is None:
         ax.legend(bbox_to_anchor=leg_anchor, loc=leg_loc)
         
+    ratio_mcStatUp = np.append(1 + np.sqrt(h[{overlay:sum}].variances())/h[{overlay:sum}].values(),[0])
+    ratio_mcStatDo = np.append(1 - np.sqrt(h[{overlay:sum}].variances())/h[{overlay:sum}].values(),[0])
+    
+        
+    ratio_uncertainty_band = rax.fill_between(
+        hData.axes[0].edges,
+        ratio_mcStatUp,
+        ratio_mcStatDo,
+        step='post',
+        color='lightgray',
+    )
+        
     if not hData is None:
         
         hist_1_values, hist_2_values = hData.values(), h[{overlay:sum}].values()
@@ -313,7 +347,7 @@ def plotWithRatio(
         )
         # ratio: plot the ratios using Matplotlib errorbar or bar
         hist.plot.plot_ratio_array(
-            hData, ratios, ratio_uncert, ax=rax, uncert_draw_type='bar',
+            hData, ratios, ratio_uncert, ax=rax, uncert_draw_type='line',
         );
 
         rax.set_ylim(ratioRange[0], ratioRange[1])
