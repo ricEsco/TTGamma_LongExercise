@@ -499,7 +499,7 @@ class TTGammaProcessor(processor.ProcessorABC):
             "eleTrigger",
             "passGenOverlapRemoval",
             "oneEle",
-            "zeroLooseElectron",
+            "zeroLooseEle",
             "zeroEle",
             
         } # FIXME 1b
