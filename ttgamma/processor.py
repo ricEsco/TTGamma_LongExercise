@@ -418,10 +418,10 @@ class TTGammaProcessor(processor.ProcessorABC):
             elif shift_syst == "JERDown":
                 jets = corrected_jets.JER.down
             elif shift_syst == "JESUp":
-                jets = corrected_jets.JES.up  #fixed
+                jets = corrected_jets.JES_jes.up  #fixed
             elif shift_syst == "JESDown":
                 #print('help!')
-                jets = corrected_jets.JES.down   #fixed 
+                jets = corrected_jets.JES_jes.down   #fixed 
             else:
                 # either nominal or some shift systematic unrelated to jets
                 jets = corrected_jets
