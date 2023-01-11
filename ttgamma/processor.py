@@ -201,7 +201,6 @@ def selectPhotons(photons):
 
     return tightPhotons, loosePhotons
 
-
 def categorizeGenPhoton(photon):
     """A helper function to categorize MC reconstructed photons
 
@@ -220,6 +219,7 @@ def categorizeGenPhoton(photon):
 
     # define the photon categories for tight photon events
     # a genuine photon is a reconstructed photon which is matched to a generator level photon, and does not have a hadronic parent
+<<<<<<< HEAD
     isGenPho = matchedPho & ~hadronicParent # FIXME 2b
     # a hadronic photon is a reconstructed photon which is matched to a generator level photon, but has a hadronic parent
     isHadPho = matchedPho & hadronicParent # FIXME 2b
@@ -227,6 +227,15 @@ def categorizeGenPhoton(photon):
     isMisIDele = matchedEle # FIXME 2b matchedEle and matchedPho are exclusive
     # a hadronic/fake photon is a reconstructed photon that does not fall within any of the above categories
     isHadFake = ~isGenPho & ~isHadPho & ~isMisIDele # FIXME 2b
+=======
+    isGenPho = matchedPho & ~hadronicParent
+    # a hadronic photon is a reconstructed photon which is matched to a generator level photon, but has a hadronic parent
+    isHadPho = matchedPho & hadronicParent 
+    # a misidentified electron is a reconstructed photon which is matched to a generator level electron
+    isMisIDele = matchedEle 
+    # a hadronic/fake photon is a reconstructed photon that does not fall within any of the above categories
+    isHadFake = ~isMisIDele & ~isHadPho & ~isGenPho 
+>>>>>>> 80ab71c48f3df0952d1552f06a8ebed9d5e615aa
 
     # integer definition for the photon category axis
     # since false = 0 , true = 1, this only leaves the integer value of the category it falls into
@@ -885,17 +894,6 @@ class TTGammaProcessor(processor.ProcessorABC):
                     weight=evtWeight[phoselLoose],
                 )
 
-                # fill photon_chIso histogram, using the loosePhotons array (photons passing all cuts, except the charged hadron isolation cuts)
-                #output["photon_chIso"].fill(
-                #    dataset=dataset,
-                #    chIso=np.asarray(leadingPhotonLoose.chIso[phoselLoose]),
-                #    category=np.asarray(phoCategoryLoose[phoselLoose]),
-                #    lepFlavor=lepton,
-                #    systematic=syst,
-                #    weight=evtWeight[phoselLoose],
-                #)
-
-
                 # fill M3 histogram, for events passing the phosel selection
 
                 output["M3"].fill(
@@ -914,8 +912,8 @@ class TTGammaProcessor(processor.ProcessorABC):
             #                'muon': selection.all("muSel", "jetSel_3j0b", "onePho")
             #               }
 
-            #for lepton in phosel_3j0t.keys():
-                # output["photon_lepton_mass_3j0t"].fill()  # FIXME 3
+#            for lepton in phosel_3j0t.keys():
+#                output["photon_lepton_mass_3j0t"].fill()
 
             output["EventCount"] = len(events)
 
