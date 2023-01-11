@@ -98,7 +98,7 @@ def selectMuons(events):
         & (abs(events.Muon.eta) < 2.4)
         & (events.Muon.tightID)
         & (events.Muon.pfRelIso04_all < 0.15)
-    )  # FIXME 1a
+    )  # fixed
 
     muonSelectLoose = (
         (events.Muon.pt > 15)
