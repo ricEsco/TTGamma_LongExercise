@@ -219,15 +219,6 @@ def categorizeGenPhoton(photon):
 
     # define the photon categories for tight photon events
     # a genuine photon is a reconstructed photon which is matched to a generator level photon, and does not have a hadronic parent
-<<<<<<< HEAD
-    isGenPho = matchedPho & ~hadronicParent # FIXME 2b
-    # a hadronic photon is a reconstructed photon which is matched to a generator level photon, but has a hadronic parent
-    isHadPho = matchedPho & hadronicParent # FIXME 2b
-    # a misidentified electron is a reconstructed photon which is matched to a generator level electron
-    isMisIDele = matchedEle # FIXME 2b matchedEle and matchedPho are exclusive
-    # a hadronic/fake photon is a reconstructed photon that does not fall within any of the above categories
-    isHadFake = ~isGenPho & ~isHadPho & ~isMisIDele # FIXME 2b
-=======
     isGenPho = matchedPho & ~hadronicParent
     # a hadronic photon is a reconstructed photon which is matched to a generator level photon, but has a hadronic parent
     isHadPho = matchedPho & hadronicParent 
@@ -235,7 +226,6 @@ def categorizeGenPhoton(photon):
     isMisIDele = matchedEle 
     # a hadronic/fake photon is a reconstructed photon that does not fall within any of the above categories
     isHadFake = ~isMisIDele & ~isHadPho & ~isGenPho 
->>>>>>> 80ab71c48f3df0952d1552f06a8ebed9d5e615aa
 
     # integer definition for the photon category axis
     # since false = 0 , true = 1, this only leaves the integer value of the category it falls into
@@ -265,7 +255,9 @@ class TTGammaProcessor(processor.ProcessorABC):
         pt_axis = hist.axis.Regular(200, 0.0, 1000, name="pt", label=r"$p_{T}$ [GeV]")
         eta_axis = hist.axis.Regular(300, -1.5, 1.5, name="eta", label=r"$\eta_{\gamma}$")
         chIso_axis = hist.axis.Regular(400, -0.1, 20.001, name="chIso", label=r"Charged Hadron Isolation")
-
+        
+        metpt_axis = hist.axis.Regular(400, -0.1, 200, name="met_pt", label=r"MET")
+        
         ## Define axis to keep track of photon category
         phoCategory_axis = hist.axis.IntCategory([1, 2, 3, 4, 5], name="category", label=r"Photon Category")
 
@@ -315,6 +307,14 @@ class TTGammaProcessor(processor.ProcessorABC):
             "M3": hist.Hist(
                 dataset_axis,
                 m3_axis,
+                phoCategory_axis,
+                lep_axis,
+                systematic_axis,
+            ),
+            ## book histogram for met pt variable
+            "met_pt": hist.Hist(
+                dataset_axis,
+                metpt_axis,
                 phoCategory_axis,
                 lep_axis,
                 systematic_axis,
@@ -588,6 +588,9 @@ class TTGammaProcessor(processor.ProcessorABC):
 
         mugammaMass = (leadingMuon + leadingPhoton).mass  # FIXME 2a
         gammaMasses = {'electron': egammaMass, 'muon': mugammaMass }
+        
+        # define met, aka the MET
+        met_pt = events.MET.pt
 
         ###################
         # PHOTON CATEGORIES
@@ -899,6 +902,17 @@ class TTGammaProcessor(processor.ProcessorABC):
                 output["M3"].fill(
                     dataset=dataset,
                     M3=np.asarray(ak.flatten(M3[phosel])),
+                    category=np.asarray(phoCategory[phosel]),
+                    lepFlavor=lepton,
+                    systematic=syst,
+                    weight=evtWeight[phosel],
+                )
+                
+                # fill met histogram, for all events
+                
+                output["met_pt"].fill(
+                    dataset=dataset,
+                    met_pt=np.asarray(met_pt[phosel]),
                     category=np.asarray(phoCategory[phosel]),
                     lepFlavor=lepton,
                     systematic=syst,
