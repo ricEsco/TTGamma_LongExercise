@@ -94,7 +94,10 @@ def selectMuons(events):
     Loose muon requirements are already coded
     """
     muonSelectTight = (
-        (events.Muon.pt > 12.3)
+        (events.Muon.pt > 30)
+        & (abs(events.Muon.eta) < 2.4)
+        & ((events.Muon.isPFcand) & (events.Muon.isTracker | events.Muon.isGlobal))
+        & (events.Muon.pfRelIso04_all < 0.15)
     )  # FIXME 1a
 
     muonSelectLoose = (
@@ -127,8 +130,12 @@ def selectElectrons(events):
     ) & (abs(events.Electron.dz) < 0.2)
 
     electronSelectTight = (
-        (events.Electron.pt > 34)
-        & (abs(events.Electron.eta) < 1.1)
+        (events.Electron.pt > 35)
+        & (abs(events.Electron.eta) < 2.1)
+        & events.Electron.cutBased>=4
+        & eleEtaGap
+        & elePassDXY
+        & elePassDZ
     )  # FIXME 1a
 
     # select loose electrons
@@ -185,10 +192,10 @@ def selectPhotons(photons):
     )
 
     # select tightPhotons, the subset of photons passing the photonSelect cut and the photonID cut
-    tightPhotons = photons[photonSelect]  # FIXME 1a
+    tightPhotons = photons[photonSelect & photonID]  # FIXME 1a
     # select loosePhotons, the subset of photons passing the photonSelect cut and all photonID cuts
     # except the charged hadron isolation cut applied (photonID_NoChIso)
-    loosePhotons = photons[photonSelect & photonID]  # FIXME 1a
+    loosePhotons = photons[photonSelect & photonID & ~(photonID_NoChIso)]  # FIXME 1a
 
     return tightPhotons, loosePhotons
 
@@ -405,11 +412,9 @@ class TTGammaProcessor(processor.ProcessorABC):
             elif shift_syst == "JERDown":
                 jets = corrected_jets.JER.down
             elif shift_syst == "JESUp":
-                print('help!')
-                # jets = ? # FIXME 1a 
+                jets = corrected_jets.JES.up # FIXME 1a
             elif shift_syst == "JESDown":
-                print('help!')
-                # jets = ? # FIXME 1a 
+                jets = corrected_jets.JES.down 
             else:
                 # either nominal or some shift systematic unrelated to jets
                 jets = corrected_jets
@@ -436,7 +441,7 @@ class TTGammaProcessor(processor.ProcessorABC):
 
         # label the subset of tightJet which pass the Deep CSV tagger
         bTagWP = 0.6321  # 2016 DeepCSV working point
-        tightJet["btagged"] = tightJet.btagDeepB > 0.456  # FIXME 1a
+        tightJet["btagged"] = tightJet.btagDeepB > bTagWP  # FIXME 1a
 
         #####################
         # EVENT SELECTION
@@ -455,22 +460,22 @@ class TTGammaProcessor(processor.ProcessorABC):
         # HINT: trigger values can be accessed with the variable events.HLT.TRIGGERNAME,
         # the bitwise or operator can be used to select multiple triggers events.HLT.TRIGGER1 | events.HLT.TRIGGER2
         selection.add(
-            "muTrigger", events.HLT.Mu50
+            "muTrigger", events.HLT.IsoMu24 | events.HLT.IsoTkMu24
         )  # FIXME 1b
-        selection.add("eleTrigger", events.HLT.Mu50)  # FIXME 1b
+        selection.add("eleTrigger", HLT.Ele27_WPTight_Gsf)  # FIXME 1b
 
         # oneMuon should be true if there is exactly one tight muon in the event
         # (the ak.num() method returns the number of objects in each row of a jagged array)
         selection.add("oneMuon", ak.num(tightMuons) == 1)
         # zeroMuon should be true if there are no tight muons in the event
-        selection.add("zeroMuon", np.zeros(len(events), dtype=bool))  # FIXME 1b
+        selection.add("zeroMuon", ak.num(tightMuons) == 0)  # FIXME 1b
         # we also need to know if there are any loose muons in each event
-        selection.add("zeroLooseMuon", np.zeros(len(events), dtype=bool))  # FIXME 1b
+        selection.add("zeroLooseMuon", ak.num(looseMuons) == 0)  # FIXME 1b
 
         # similar selections will be needed for electrons
-        selection.add("oneEle", np.zeros(len(events), dtype=bool))  # FIXME 1b
-        selection.add("zeroEle", np.zeros(len(events), dtype=bool))  # FIXME 1b
-        selection.add("zeroLooseEle", np.zeros(len(events), dtype=bool))  # FIXME 1b
+        selection.add("oneEle", ak.num(tightElectrons) == 1)  # FIXME 1b
+        selection.add("zeroEle", ak.num(tightElectrons) == 0)  # FIXME 1b
+        selection.add("zeroLooseEle", ak.num(looseElectrons) == 0)  # FIXME 1b
 
         # our overall muon category is then those events that pass:
         muon_cat = {
@@ -483,7 +488,14 @@ class TTGammaProcessor(processor.ProcessorABC):
         }
 
         # similarly for electrons:
-        ele_cat = {} # FIXME 1b
+        ele_cat = {
+            "eleTrigger",
+            "passGenOverlapRemoval",
+            "oneElectron",
+            "zeroLooseElectron",
+            "zeroMuon",
+            "zeroLooseMuon",
+        } # FIXME 1b
 
         selection.add("eleSel", selection.all(*ele_cat))
         selection.add("muSel", selection.all(*muon_cat))
@@ -496,7 +508,7 @@ class TTGammaProcessor(processor.ProcessorABC):
         #   And another which selects events with at least 3 tightJet and exactly zero b-tagged jet
         selection.add(
             "jetSel_3j0b",
-            np.zeros(len(events), dtype=bool),
+            (ak.num(tightJet) >= 3) & (ak.sum(tightJet.btagged, axis=-1) == 0),
         )  # FIXME 1b
 
         # add selection for events with exactly 0 tight photons
@@ -847,14 +859,14 @@ class TTGammaProcessor(processor.ProcessorABC):
                 )
 
                 # fill M3 histogram, for events passing the phosel selection
-                output["M3"].fill(
-                    dataset=dataset,
-                    M3=np.asarray(ak.flatten(M3[phosel])),
-                    category=np.asarray(phoCategory[phosel]),
-                    lepFlavor=lepton,
-                    systematic=syst,
-                    weight=evtWeight[phosel],
-                )
+#                 output["M3"].fill(
+#                     dataset=dataset,
+#                     M3=np.asarray(ak.flatten(M3[phosel])),
+#                     category=np.asarray(phoCategory[phosel]),
+#                     lepFlavor=lepton,
+#                     systematic=syst,
+#                     weight=evtWeight[phosel],
+#                 )
 
             # use the selection.all() method to select events passing the eleSel or muSel selection,
             # and the 3-jet 0-btag selection, and have exactly one photon
@@ -863,7 +875,7 @@ class TTGammaProcessor(processor.ProcessorABC):
                             'muon': selection.all("muSel", "jetSel_3j0b", "onePho")
                            }
 
-            for lepton in phosel_3j0t.keys():
+#             for lepton in phosel_3j0t.keys():
                 # output["photon_lepton_mass_3j0t"].fill()  # FIXME 3
 
             output["EventCount"] = len(events)
