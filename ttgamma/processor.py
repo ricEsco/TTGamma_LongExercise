@@ -268,6 +268,7 @@ class TTGammaProcessor(processor.ProcessorABC):
             "all_photon_pt": hist.Hist(
                 dataset_axis,
                 pt_axis),
+            
             ## book histograms for photon pt, eta, and charged hadron isolation
             "photon_pt": hist.Hist(
                 dataset_axis,
@@ -276,7 +277,16 @@ class TTGammaProcessor(processor.ProcessorABC):
                 lep_axis,
                 systematic_axis,
             ),
+            
             # "photon_eta": hist.Hist(...),  # FIXME 3
+            "photon_eta":hist.Hist(
+                dataset_axis,
+                eta_axis,
+                phoCategory_axis,
+                lep_axis,
+                systematic_axis,
+            ),
+            
             "photon_chIso": hist.Hist(
                 dataset_axis,
                 chIso_axis,
@@ -837,7 +847,7 @@ class TTGammaProcessor(processor.ProcessorABC):
                 # the lepton selection, 4-jet 1-tag jet selection, and either the one-photon or loose-photon selections
                 phosel = selection.all(lepSel, "jetSel_4j1b", "onePho")
                 phoselLoose = selection.all(
-                    lepSel, "jetSel_4j1b", "zeroPho"
+                    lepSel, "jetSel_4j1b", "loosePho"
                 )  # FIXME 3
 
                 # fill photon_pt and photon_eta, using the leadingPhoton array, from events passing the phosel selection
@@ -855,35 +865,55 @@ class TTGammaProcessor(processor.ProcessorABC):
                     weight=evtWeight[phosel],
                 )
 
-                # output["photon_eta"].fill()  # FIXME 3
-
+                output["photon_eta"].fill(
+                    dataset=dataset,
+                    eta=np.asarray(leadingPhoton.eta[phosel]),
+                    category=np.asarray(phoCategory[phosel]),
+                    lepFlavor=lepton,
+                    systematic=syst,
+                    weight=evtWeight[phosel],
+                )
+                
                 # fill photon_chIso histogram, using the loosePhotons array (photons passing all cuts, except the charged hadron isolation cuts)
         
                 output["photon_chIso"].fill(
                     dataset=dataset,
-                    chIso=np.asarray(ak.flatten(leadingPhotonLoose.chIso[phoselLoose])),
-                    category=np.asarray(ak.flatten(phoCategoryLoose[phoselLoose])),
+                    chIso=np.asarray(leadingPhotonLoose.chIso[phoselLoose]),
+                    category=np.asarray(phoCategoryLoose[phoselLoose]),
                     lepFlavor=lepton,
                     systematic=syst,
                     weight=evtWeight[phoselLoose],
                 )
-                # fill M3 histogram, for events passing the phosel selection
 
-                #output["M3"].fill(
+
+                # fill photon_chIso histogram, using the loosePhotons array (photons passing all cuts, except the charged hadron isolation cuts)
+                #output["photon_chIso"].fill(
                 #    dataset=dataset,
-                #    M3=np.asarray(ak.flatten(M3[phosel])),
-                #    category=np.asarray(phoCategory[phosel]),
+                #    chIso=np.asarray(leadingPhotonLoose.chIso[phoselLoose]),
+                #    category=np.asarray(phoCategoryLoose[phoselLoose]),
                 #    lepFlavor=lepton,
                 #    systematic=syst,
-                #    weight=evtWeight[phosel],
+                #    weight=evtWeight[phoselLoose],
                 #)
+
+
+                # fill M3 histogram, for events passing the phosel selection
+
+                output["M3"].fill(
+                    dataset=dataset,
+                    M3=np.asarray(ak.flatten(M3[phosel])),
+                    category=np.asarray(phoCategory[phosel]),
+                    lepFlavor=lepton,
+                    systematic=syst,
+                    weight=evtWeight[phosel],
+                )
 
             # use the selection.all() method to select events passing the eleSel or muSel selection,
             # and the 3-jet 0-btag selection, and have exactly one photon
 
-            phosel_3j0t = { 'electron': selection.all("eleSel", "jetSel_3j0b", "onePho"),
-                            'muon': selection.all("muSel", "jetSel_3j0b", "onePho")
-                           }
+            #phosel_3j0t = { 'electron': selection.all("eleSel", "jetSel_3j0b", "onePho"),
+            #                'muon': selection.all("muSel", "jetSel_3j0b", "onePho")
+            #               }
 
             #for lepton in phosel_3j0t.keys():
                 # output["photon_lepton_mass_3j0t"].fill()  # FIXME 3
