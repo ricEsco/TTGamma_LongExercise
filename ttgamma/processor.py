@@ -847,7 +847,7 @@ class TTGammaProcessor(processor.ProcessorABC):
                 # the lepton selection, 4-jet 1-tag jet selection, and either the one-photon or loose-photon selections
                 phosel = selection.all(lepSel, "jetSel_4j1b", "onePho")
                 phoselLoose = selection.all(
-                    lepSel, "jetSel_4j1b", "zeroPho"
+                    lepSel, "jetSel_4j1b", "loosePho"
                 )  # FIXME 3
 
                 # fill photon_pt and photon_eta, using the leadingPhoton array, from events passing the phosel selection
