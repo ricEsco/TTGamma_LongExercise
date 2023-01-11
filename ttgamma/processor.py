@@ -562,8 +562,6 @@ class TTGammaProcessor(processor.ProcessorABC):
         leadingElectron = ak.firsts(tightElectrons)
         leadingPhoton = ak.firsts(tightPhotons)
         leadingPhotonLoose = ak.firsts(loosePhotons)
-        
-        print(leadingPhotonLoose)
 
         # define egammaMass, mass of leadingElectron and leadingPhoton system
         egammaMass  = (leadingElectron + leadingPhoton).mass
