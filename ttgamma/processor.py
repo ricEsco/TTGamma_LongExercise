@@ -884,17 +884,6 @@ class TTGammaProcessor(processor.ProcessorABC):
                     weight=evtWeight[phoselLoose],
                 )
 
-                # fill photon_chIso histogram, using the loosePhotons array (photons passing all cuts, except the charged hadron isolation cuts)
-                #output["photon_chIso"].fill(
-                #    dataset=dataset,
-                #    chIso=np.asarray(leadingPhotonLoose.chIso[phoselLoose]),
-                #    category=np.asarray(phoCategoryLoose[phoselLoose]),
-                #    lepFlavor=lepton,
-                #    systematic=syst,
-                #    weight=evtWeight[phoselLoose],
-                #)
-
-
                 # fill M3 histogram, for events passing the phosel selection
 
                 output["M3"].fill(
