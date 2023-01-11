@@ -524,13 +524,14 @@ class TTGammaProcessor(processor.ProcessorABC):
         # Find all possible combinations of 3 tight jets in the events
         # Hint: using the ak.combinations(array,n) method chooses n unique items from array.
         # More hints are in the twiki
-        # triJet = ak.combinations()  # FIXME 2a
+        triJet = ak.combinations(tightJets, 3, fields=["first","second","third"])  # FIXME 2a
         # Sum together jets from the triJet object and find its pt and mass
-        # triJetPt = ().pt  # FIXME 2a
-        # triJetMass = ().mass  # FIXME 2a
+        triJetPt = (triJet.first + triJet.second + triJet.third).pt  # FIXME 2a
+        triJetMass = (triJet.first + triJet.second + triJet.third).mass  # FIXME 2a
         # define the M3 variable, the triJetMass of the combination with the highest triJetPt value
         # (ak.argmax and ak.firsts will be helpful here)
-        M3 = np.ones(len(events)) # FIXME 2a        
+        highPtIdx = ak.argmax(triJetPt, axis=-1, keepdims=True)
+        M3 = triJetMass[highPtIdx]     
         
         # For all the other event-level variables, we can form the variables from just
         # the leading (in pt) objects rather than form all combinations and arbitrate them
@@ -546,7 +547,7 @@ class TTGammaProcessor(processor.ProcessorABC):
         egammaMass  = (leadingElectron + leadingPhoton).mass
         # define mugammaMass analogously
      
-        mugammaMass = leadingMuon.mass  # FIXME 2a
+        mugammaMass = (leadingMuon + leadingPhoton).mass  # FIXME 2a
         gammaMasses = {'electron': egammaMass, 'muon': mugammaMass }
 
         ###################
@@ -863,7 +864,7 @@ class TTGammaProcessor(processor.ProcessorABC):
                             'muon': selection.all("muSel", "jetSel_3j0b", "onePho")
                            }
 
-            for lepton in phosel_3j0t.keys():
+            #for lepton in phosel_3j0t.keys():
                 # output["photon_lepton_mass_3j0t"].fill()  # FIXME 3
 
             output["EventCount"] = len(events)
