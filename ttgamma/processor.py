@@ -197,7 +197,7 @@ def selectPhotons(photons):
     tightPhotons = photons[photonSelect & photonID]  # FIXME 1a
     # select loosePhotons, the subset of photons passing the photonSelect cut and all photonID cuts
     # except the charged hadron isolation cut applied (photonID_NoChIso)
-    loosePhotons = photons[photonSelect & photonID & ~(photonID_NoChIso)]  # FIXME 1a
+    loosePhotons = photons[photonSelect & photonID_NoChIso]  # FIXME 1a
 
     return tightPhotons, loosePhotons
 
@@ -306,9 +306,9 @@ class TTGammaProcessor(processor.ProcessorABC):
             "M3": hist.Hist(
                 dataset_axis,
                 m3_axis,
-                #phoCategory_axis,
-                #lep_axis,
-                #systematic_axis,
+                phoCategory_axis,
+                lep_axis,
+                systematic_axis,
             ),
             "EventCount": processor.value_accumulator(int),
         }
@@ -873,6 +873,18 @@ class TTGammaProcessor(processor.ProcessorABC):
                     systematic=syst,
                     weight=evtWeight[phosel],
                 )
+                
+                # fill photon_chIso histogram, using the loosePhotons array (photons passing all cuts, except the charged hadron isolation cuts)
+        
+                output["photon_chIso"].fill(
+                    dataset=dataset,
+                    chIso=np.asarray(leadingPhotonLoose.chIso[phoselLoose]),
+                    category=np.asarray(phoCategoryLoose[phoselLoose]),
+                    lepFlavor=lepton,
+                    systematic=syst,
+                    weight=evtWeight[phoselLoose],
+                )
+
 
                 # fill photon_chIso histogram, using the loosePhotons array (photons passing all cuts, except the charged hadron isolation cuts)
                 #output["photon_chIso"].fill(
@@ -884,15 +896,16 @@ class TTGammaProcessor(processor.ProcessorABC):
                 #    weight=evtWeight[phoselLoose],
                 #)
 
+
                 # fill M3 histogram, for events passing the phosel selection
 
                 output["M3"].fill(
                     dataset=dataset,
                     M3=np.asarray(ak.flatten(M3[phosel])),
-                #    category=np.asarray(phoCategory[phosel]),
-                #    lepFlavor=lepton,
-                #    systematic=syst,
-                #    weight=evtWeight[phosel],
+                    category=np.asarray(phoCategory[phosel]),
+                    lepFlavor=lepton,
+                    systematic=syst,
+                    weight=evtWeight[phosel],
                 )
 
             # use the selection.all() method to select events passing the eleSel or muSel selection,
