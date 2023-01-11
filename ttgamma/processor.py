@@ -509,8 +509,6 @@ class TTGammaProcessor(processor.ProcessorABC):
             "passGenOverlapRemoval",
             "oneEle",
             "zeroLooseEle",
-            "zeroEle",
-
         } # FIXME 1b
 
         selection.add("eleSel", selection.all(*ele_cat))
