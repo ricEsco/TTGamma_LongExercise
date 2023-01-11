@@ -491,19 +491,17 @@ class TTGammaProcessor(processor.ProcessorABC):
             "muTrigger",
             "passGenOverlapRemoval",
             "oneMuon",
-            "zeroLooseMuon",
-            "zeroEle",
-            "zeroLooseEle",
+            "zeroLooseMuon",          
         }
 
         # similarly for electrons:
         ele_cat = {
             "eleTrigger",
             "passGenOverlapRemoval",
-            "oneElectron",
+            "oneEle",
             "zeroLooseElectron",
-            "zeroMuon",
-            "zeroLooseMuon",
+            "zeroEle",
+            
         } # FIXME 1b
 
         selection.add("eleSel", selection.all(*ele_cat))
