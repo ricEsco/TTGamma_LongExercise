@@ -131,8 +131,10 @@ def selectElectrons(events):
 
     electronSelectTight = (
         (events.Electron.pt > 34)
-        & (abs(events.Electron.eta) < 1.1)
-    )  # FIXME 1a
+        & (abs(events.Electron.eta) < 2.1)
+        & (events.Electron.cutBased >= 4)
+        & eleEtaGap & elePassDXY & elePassDZ
+    )  # FIXME 1a -- should be good -Ethan
 
     # select loose electrons
     electronSelectLoose = (
@@ -238,8 +240,12 @@ class TTGammaProcessor(processor.ProcessorABC):
         self.isMC = isMC
         
         lep_axis = hist.axis.StrCategory([], name="lepFlavor", label="Lepton flavor", growth=True)
-
+        
+        #added to try and stop error
+        #nominal_axis = hist.axis.StrCategory([], name="nominal", label="Nominal correction", growth=True)
+        
         systematic_axis = hist.axis.StrCategory([], name="systematic", label="Systematic uncertainty", growth=True)
+        
 
         m3_axis = hist.axis.Regular(200, 0.0, 1000, name="M3", label=r"$M_3$ [GeV]")
         mass_axis = hist.axis.Regular(400, 0.0, 400, name="mass", label=r"$m_{\ell\gamma}$ [GeV]")
@@ -459,8 +465,9 @@ class TTGammaProcessor(processor.ProcessorABC):
         # the bitwise or operator can be used to select multiple triggers events.HLT.TRIGGER1 | events.HLT.TRIGGER2
         selection.add(
             "muTrigger", events.HLT.IsoMu24 | events.HLT.IsoTkMu24
-        )  # fixed
-        selection.add("eleTrigger", events.HLT.Ele27_WPTight_Gsf)  # fixed
+        )  # FIXME 1b -- fixed  -Ethan
+        selection.add("eleTrigger", events.HLT.Ele27_WPTight_Gsf)  # FIXME 1b -- fixed -Ethan
+          
 
         # oneMuon should be true if there is exactly one tight muon in the event
         # (the ak.num() method returns the number of objects in each row of a jagged array)
@@ -503,13 +510,13 @@ class TTGammaProcessor(processor.ProcessorABC):
         )  # fixed
 
         # add selection for events with exactly 0 tight photons
-        selection.add("zeroPho", np.zeros(len(events), dtype=bool))  # FIXME 1b
+        selection.add("zeroPho", ak.num(tightPhotons) == 0)  # FIXME 1b -- fixed -Ethan
 
         # add selection for events with exactly 1 tight photon
-        selection.add("onePho", np.zeros(len(events), dtype=bool))  # FIXME 1b
+        selection.add("onePho", ak.num(tightPhotons) == 1)  # FIXME 1b -- fixed -Ethan
 
         # add selection for events with exactly 1 loose photon
-        selection.add("loosePho", np.zeros(len(events), dtype=bool))  # FIXME 1b
+        selection.add("loosePho", ak.num(loosePhotons) == 1)  # FIXME 1b -- fixed -Ethan
 
         # useful debugger for selection efficiency
         if False and shift_syst is None:
@@ -850,6 +857,7 @@ class TTGammaProcessor(processor.ProcessorABC):
                 )
 
                 # fill M3 histogram, for events passing the phosel selection
+
                 #output["M3"].fill(
                 #    dataset=dataset,
                 #    M3=np.asarray(ak.flatten(M3[phosel])),
