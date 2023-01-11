@@ -906,7 +906,8 @@ class TTGammaProcessor(processor.ProcessorABC):
                         mass=np.asarray(gammaMasses[lepton][phosel_3j0t[lepton]]),
                         category=np.asarray(phoCategory[phosel_3j0t[lepton]]),
                         lepFlavor=lepton,
-                        systematic=syst
+                        systematic=syst,
+                        weight=evtWeight[phosel_3j0t[lepton]]
                         )
 
             output["EventCount"] = len(events)
