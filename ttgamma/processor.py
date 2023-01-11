@@ -221,11 +221,11 @@ def categorizeGenPhoton(photon):
     # a genuine photon is a reconstructed photon which is matched to a generator level photon, and does not have a hadronic parent
     isGenPho = matchedPho & ~hadronicParent
     # a hadronic photon is a reconstructed photon which is matched to a generator level photon, but has a hadronic parent
-    isHadPho = matchedPho & hadronicParent 
+    isHadPho = matchedPho & hadronicParent
     # a misidentified electron is a reconstructed photon which is matched to a generator level electron
-    isMisIDele = matchedEle 
+    isMisIDele = matchedEle
     # a hadronic/fake photon is a reconstructed photon that does not fall within any of the above categories
-    isHadFake = ~isMisIDele & ~isHadPho & ~isGenPho 
+    isHadFake = ~isMisIDele & ~isHadPho & ~isGenPho
 
     # integer definition for the photon category axis
     # since false = 0 , true = 1, this only leaves the integer value of the category it falls into
@@ -243,12 +243,12 @@ class TTGammaProcessor(processor.ProcessorABC):
         self.isMC = isMC
 
         lep_axis = hist.axis.StrCategory([], name="lepFlavor", label="Lepton flavor", growth=True)
-        
+
         #added to try and stop error
         #nominal_axis = hist.axis.StrCategory([], name="nominal", label="Nominal correction", growth=True)
-        
+
         systematic_axis = hist.axis.StrCategory([], name="systematic", label="Systematic uncertainty", growth=True)
-        
+
 
         m3_axis = hist.axis.Regular(200, 0.0, 1000, name="M3", label=r"$M_3$ [GeV]")
         mass_axis = hist.axis.Regular(400, 0.0, 400, name="mass", label=r"$m_{\ell\gamma}$ [GeV]")
@@ -267,7 +267,7 @@ class TTGammaProcessor(processor.ProcessorABC):
             "all_photon_pt": hist.Hist(
                 dataset_axis,
                 pt_axis),
-            
+
             ## book histograms for photon pt, eta, and charged hadron isolation
             "photon_pt": hist.Hist(
                 dataset_axis,
@@ -276,7 +276,7 @@ class TTGammaProcessor(processor.ProcessorABC):
                 lep_axis,
                 systematic_axis,
             ),
-            
+
             # "photon_eta": hist.Hist(...),  # FIXME 3
             "photon_eta":hist.Hist(
                 dataset_axis,
@@ -285,7 +285,7 @@ class TTGammaProcessor(processor.ProcessorABC):
                 lep_axis,
                 systematic_axis,
             ),
-            
+
             "photon_chIso": hist.Hist(
                 dataset_axis,
                 chIso_axis,
@@ -430,7 +430,7 @@ class TTGammaProcessor(processor.ProcessorABC):
                 jets = corrected_jets.JES_jes.up  #fixed
             elif shift_syst == "JESDown":
                 #print('help!')
-                jets = corrected_jets.JES_jes.down   #fixed 
+                jets = corrected_jets.JES_jes.down   #fixed
             else:
                 # either nominal or some shift systematic unrelated to jets
                 jets = corrected_jets
@@ -457,7 +457,7 @@ class TTGammaProcessor(processor.ProcessorABC):
 
         # label the subset of tightJet which pass the Deep CSV tagger
         bTagWP = 0.6321  # 2016 DeepCSV working point
-        tightJet["btagged"] = tightJet.btagDeepB > bTagWP #fixed 
+        tightJet["btagged"] = tightJet.btagDeepB > bTagWP #fixed
 
 
         #####################
@@ -480,7 +480,7 @@ class TTGammaProcessor(processor.ProcessorABC):
             "muTrigger", events.HLT.IsoMu24 | events.HLT.IsoTkMu24
         )  # FIXME 1b -- fixed  -Ethan
         selection.add("eleTrigger", events.HLT.Ele27_WPTight_Gsf)  # FIXME 1b -- fixed -Ethan
-          
+
 
         # oneMuon should be true if there is exactly one tight muon in the event
         # (the ak.num() method returns the number of objects in each row of a jagged array)
@@ -500,7 +500,7 @@ class TTGammaProcessor(processor.ProcessorABC):
             "muTrigger",
             "passGenOverlapRemoval",
             "oneMuon",
-            "zeroLooseMuon",          
+            "zeroLooseMuon",
         }
 
         # similarly for electrons:
@@ -870,9 +870,9 @@ class TTGammaProcessor(processor.ProcessorABC):
                     systematic=syst,
                     weight=evtWeight[phosel],
                 )
-                
+
                 # fill photon_chIso histogram, using the loosePhotons array (photons passing all cuts, except the charged hadron isolation cuts)
-        
+
                 output["photon_chIso"].fill(
                     dataset=dataset,
                     chIso=np.asarray(leadingPhotonLoose.chIso[phoselLoose]),
@@ -896,12 +896,18 @@ class TTGammaProcessor(processor.ProcessorABC):
             # use the selection.all() method to select events passing the eleSel or muSel selection,
             # and the 3-jet 0-btag selection, and have exactly one photon
 
-            #phosel_3j0t = { 'electron': selection.all("eleSel", "jetSel_3j0b", "onePho"),
-            #                'muon': selection.all("muSel", "jetSel_3j0b", "onePho")
-            #               }
+            phosel_3j0t = { 'electron': selection.all("eleSel", "jetSel_3j0b", "onePho"),
+                            'muon': selection.all("muSel", "jetSel_3j0b", "onePho")
+                           }
 
-#            for lepton in phosel_3j0t.keys():
-#                output["photon_lepton_mass_3j0t"].fill()
+            for lepton in phosel_3j0t.keys():
+                output["photon_lepton_mass_3j0t"].fill(
+                        dataset=dataset,
+                        mass=np.asarray(gammaMasses[lepton][phosel_3j0t[lepton]]),
+                        category=np.asarray(phoCategory[phosel_3j0t[lepton]]),
+                        lepFlavor=lepton,
+                        systematic=syst
+                        )
 
             output["EventCount"] = len(events)
 
