@@ -133,7 +133,7 @@ def selectElectrons(events):
     electronSelectTight = (
         (events.Electron.pt > 35)
         & (abs(events.Electron.eta) < 2.1)
-        & events.Electron.cutBased>=4
+        & (events.Electron.cutBased>=4)
         & eleEtaGap
         & elePassDXY
         & elePassDZ
@@ -685,7 +685,7 @@ class TTGammaProcessor(processor.ProcessorABC):
 
             eleSF = ak.prod((eleID * eleRECO), axis=-1)
             eleSF_up = ak.prod(((eleID + eleIDerr) * (eleRECO + eleRECOerr)), axis=-1)
-            eleSF_down = ak.prod( (eleID - eleIDerr) * (eleRECO - eleRECO), axis=-1)  #fixed
+            eleSF_down = ak.prod(((eleID - eleIDerr) * (eleRECO - eleRECOerr)), axis=-1)  #fixed
             weights.add("eleEffWeight", weight=eleSF, weightUp=eleSF_up, weightDown=eleSF_down)  #fixed
 
             muID = mu_id_sf(tightMuons.eta, tightMuons.pt)
