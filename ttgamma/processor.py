@@ -100,6 +100,7 @@ def selectMuons(events):
         & (events.Muon.pfRelIso04_all < 0.15)
     )  # fixed
 
+
     muonSelectLoose = (
         (events.Muon.pt > 15)
         & (abs(events.Muon.eta) < 2.4)
@@ -130,11 +131,14 @@ def selectElectrons(events):
     ) & (abs(events.Electron.dz) < 0.2)
 
     electronSelectTight = (
-        (events.Electron.pt > 34)
+        (events.Electron.pt > 35)
         & (abs(events.Electron.eta) < 2.1)
-        & (events.Electron.cutBased >= 4)
-        & eleEtaGap & elePassDXY & elePassDZ
-    )  # FIXME 1a -- should be good -Ethan
+        & events.Electron.cutBased>=4
+        & eleEtaGap
+        & elePassDXY
+        & elePassDZ
+    )  # FIXME 1a
+
 
     # select loose electrons
     electronSelectLoose = (
@@ -190,10 +194,10 @@ def selectPhotons(photons):
     )
 
     # select tightPhotons, the subset of photons passing the photonSelect cut and the photonID cut
-    tightPhotons = photons[photonSelect]  # FIXME 1a
+    tightPhotons = photons[photonSelect & photonID]  # FIXME 1a
     # select loosePhotons, the subset of photons passing the photonSelect cut and all photonID cuts
     # except the charged hadron isolation cut applied (photonID_NoChIso)
-    loosePhotons = photons[photonSelect & photonID]  # FIXME 1a
+    loosePhotons = photons[photonSelect & photonID & ~(photonID_NoChIso)]  # FIXME 1a
 
     return tightPhotons, loosePhotons
 
@@ -414,7 +418,6 @@ class TTGammaProcessor(processor.ProcessorABC):
             elif shift_syst == "JERDown":
                 jets = corrected_jets.JER.down
             elif shift_syst == "JESUp":
-                #print('help!')
                 jets = corrected_jets.JES.up  #fixed
             elif shift_syst == "JESDown":
                 #print('help!')
@@ -447,6 +450,7 @@ class TTGammaProcessor(processor.ProcessorABC):
         bTagWP = 0.6321  # 2016 DeepCSV working point
         tightJet["btagged"] = tightJet.btagDeepB > bTagWP #fixed 
 
+
         #####################
         # EVENT SELECTION
         #####################
@@ -478,9 +482,9 @@ class TTGammaProcessor(processor.ProcessorABC):
         selection.add("zeroLooseMuon", ak.num(looseMuons) == 0) # fixed
 
         # similar selections will be needed for electrons
-        selection.add("oneEle", np.zeros(len(events), dtype=bool))  # FIXME 1b
-        selection.add("zeroEle", np.zeros(len(events), dtype=bool))  # FIXME 1b
-        selection.add("zeroLooseEle", np.zeros(len(events), dtype=bool))  # FIXME 1b
+        selection.add("oneEle", ak.num(tightElectrons) == 1)  # FIXME 1b
+        selection.add("zeroEle", ak.num(tightElectrons) == 0)  # FIXME 1b
+        selection.add("zeroLooseEle", ak.num(looseElectrons) == 0)  # FIXME 1b
 
         # our overall muon category is then those events that pass:
         muon_cat = {
@@ -493,7 +497,14 @@ class TTGammaProcessor(processor.ProcessorABC):
         }
 
         # similarly for electrons:
-        ele_cat = {} # FIXME 1b
+        ele_cat = {
+            "eleTrigger",
+            "passGenOverlapRemoval",
+            "oneElectron",
+            "zeroLooseElectron",
+            "zeroMuon",
+            "zeroLooseMuon",
+        } # FIXME 1b
 
         selection.add("eleSel", selection.all(*ele_cat))
         selection.add("muSel", selection.all(*muon_cat))
@@ -508,6 +519,7 @@ class TTGammaProcessor(processor.ProcessorABC):
             "jetSel_3j0b",
             (ak.num(tightJet) >= 3) & (ak.sum(tightJet.btagged, axis=-1) == 0),
         )  # fixed
+
 
         # add selection for events with exactly 0 tight photons
         selection.add("zeroPho", ak.num(tightPhotons) == 0)  # FIXME 1b -- fixed -Ethan
