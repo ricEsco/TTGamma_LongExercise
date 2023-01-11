@@ -96,9 +96,10 @@ def selectMuons(events):
     muonSelectTight = (
         (events.Muon.pt > 30)
         & (abs(events.Muon.eta) < 2.4)
-        & ((events.Muon.isPFcand) & (events.Muon.isTracker | events.Muon.isGlobal))
+        & (events.Muon.tightID)
         & (events.Muon.pfRelIso04_all < 0.15)
-    )  # FIXME 1a
+    )  # fixed
+
 
     muonSelectLoose = (
         (events.Muon.pt > 15)
@@ -137,6 +138,7 @@ def selectElectrons(events):
         & elePassDXY
         & elePassDZ
     )  # FIXME 1a
+
 
     # select loose electrons
     electronSelectLoose = (
@@ -242,8 +244,12 @@ class TTGammaProcessor(processor.ProcessorABC):
         self.isMC = isMC
         
         lep_axis = hist.axis.StrCategory([], name="lepFlavor", label="Lepton flavor", growth=True)
-
+        
+        #added to try and stop error
+        #nominal_axis = hist.axis.StrCategory([], name="nominal", label="Nominal correction", growth=True)
+        
         systematic_axis = hist.axis.StrCategory([], name="systematic", label="Systematic uncertainty", growth=True)
+        
 
         m3_axis = hist.axis.Regular(200, 0.0, 1000, name="M3", label=r"$M_3$ [GeV]")
         mass_axis = hist.axis.Regular(400, 0.0, 400, name="mass", label=r"$m_{\ell\gamma}$ [GeV]")
@@ -412,9 +418,10 @@ class TTGammaProcessor(processor.ProcessorABC):
             elif shift_syst == "JERDown":
                 jets = corrected_jets.JER.down
             elif shift_syst == "JESUp":
-                jets = corrected_jets.JES.up # FIXME 1a
+                jets = corrected_jets.JES.up  #fixed
             elif shift_syst == "JESDown":
-                jets = corrected_jets.JES.down 
+                #print('help!')
+                jets = corrected_jets.JES.down   #fixed 
             else:
                 # either nominal or some shift systematic unrelated to jets
                 jets = corrected_jets
@@ -441,7 +448,8 @@ class TTGammaProcessor(processor.ProcessorABC):
 
         # label the subset of tightJet which pass the Deep CSV tagger
         bTagWP = 0.6321  # 2016 DeepCSV working point
-        tightJet["btagged"] = tightJet.btagDeepB > bTagWP  # FIXME 1a
+        tightJet["btagged"] = tightJet.btagDeepB > bTagWP #fixed 
+
 
         #####################
         # EVENT SELECTION
@@ -461,16 +469,17 @@ class TTGammaProcessor(processor.ProcessorABC):
         # the bitwise or operator can be used to select multiple triggers events.HLT.TRIGGER1 | events.HLT.TRIGGER2
         selection.add(
             "muTrigger", events.HLT.IsoMu24 | events.HLT.IsoTkMu24
-        )  # FIXME 1b
-        selection.add("eleTrigger", HLT.Ele27_WPTight_Gsf)  # FIXME 1b
+        )  # FIXME 1b -- fixed  -Ethan
+        selection.add("eleTrigger", events.HLT.Ele27_WPTight_Gsf)  # FIXME 1b -- fixed -Ethan
+          
 
         # oneMuon should be true if there is exactly one tight muon in the event
         # (the ak.num() method returns the number of objects in each row of a jagged array)
         selection.add("oneMuon", ak.num(tightMuons) == 1)
         # zeroMuon should be true if there are no tight muons in the event
-        selection.add("zeroMuon", ak.num(tightMuons) == 0)  # FIXME 1b
+        selection.add("zeroMuon", ak.num(tightMuons) == 0)#, dtype=bool))  # fixed
         # we also need to know if there are any loose muons in each event
-        selection.add("zeroLooseMuon", ak.num(looseMuons) == 0)  # FIXME 1b
+        selection.add("zeroLooseMuon", ak.num(looseMuons) == 0) # fixed
 
         # similar selections will be needed for electrons
         selection.add("oneEle", ak.num(tightElectrons) == 1)  # FIXME 1b
@@ -509,16 +518,17 @@ class TTGammaProcessor(processor.ProcessorABC):
         selection.add(
             "jetSel_3j0b",
             (ak.num(tightJet) >= 3) & (ak.sum(tightJet.btagged, axis=-1) == 0),
-        )  # FIXME 1b
+        )  # fixed
+
 
         # add selection for events with exactly 0 tight photons
-        selection.add("zeroPho", np.zeros(len(events), dtype=bool))  # FIXME 1b
+        selection.add("zeroPho", ak.num(tightPhotons) == 0)  # FIXME 1b -- fixed -Ethan
 
         # add selection for events with exactly 1 tight photon
-        selection.add("onePho", np.zeros(len(events), dtype=bool))  # FIXME 1b
+        selection.add("onePho", ak.num(tightPhotons) == 1)  # FIXME 1b -- fixed -Ethan
 
         # add selection for events with exactly 1 loose photon
-        selection.add("loosePho", np.zeros(len(events), dtype=bool))  # FIXME 1b
+        selection.add("loosePho", ak.num(loosePhotons) == 1)  # FIXME 1b -- fixed -Ethan
 
         # useful debugger for selection efficiency
         if False and shift_syst is None:
@@ -859,14 +869,15 @@ class TTGammaProcessor(processor.ProcessorABC):
                 )
 
                 # fill M3 histogram, for events passing the phosel selection
-#                 output["M3"].fill(
-#                     dataset=dataset,
-#                     M3=np.asarray(ak.flatten(M3[phosel])),
-#                     category=np.asarray(phoCategory[phosel]),
-#                     lepFlavor=lepton,
-#                     systematic=syst,
-#                     weight=evtWeight[phosel],
-#                 )
+
+                #output["M3"].fill(
+                #    dataset=dataset,
+                #    M3=np.asarray(ak.flatten(M3[phosel])),
+                #    category=np.asarray(phoCategory[phosel]),
+                #    lepFlavor=lepton,
+                #    systematic=syst,
+                #    weight=evtWeight[phosel],
+                #)
 
             # use the selection.all() method to select events passing the eleSel or muSel selection,
             # and the 3-jet 0-btag selection, and have exactly one photon
@@ -875,7 +886,7 @@ class TTGammaProcessor(processor.ProcessorABC):
                             'muon': selection.all("muSel", "jetSel_3j0b", "onePho")
                            }
 
-#             for lepton in phosel_3j0t.keys():
+            #for lepton in phosel_3j0t.keys():
                 # output["photon_lepton_mass_3j0t"].fill()  # FIXME 3
 
             output["EventCount"] = len(events)
