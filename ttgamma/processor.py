@@ -242,7 +242,7 @@ class TTGammaProcessor(processor.ProcessorABC):
         ak.behavior.update(nanoaod.behavior)
 
         self.isMC = isMC
-        
+
         lep_axis = hist.axis.StrCategory([], name="lepFlavor", label="Lepton flavor", growth=True)
         
         #added to try and stop error
@@ -259,11 +259,11 @@ class TTGammaProcessor(processor.ProcessorABC):
 
         ## Define axis to keep track of photon category
         phoCategory_axis = hist.axis.IntCategory([1, 2, 3, 4, 5], name="category", label=r"Photon Category")
-        
+
         ## And the dataset
         dataset_axis = hist.axis.StrCategory([], name="dataset", label="Dataset", growth=True)
 
-        self.make_output = lambda: { 
+        self.make_output = lambda: {
             # Test histogram; not needed for final analysis but useful to check things are working
             "all_photon_pt": hist.Hist(
                 dataset_axis,
@@ -302,9 +302,9 @@ class TTGammaProcessor(processor.ProcessorABC):
             ),
             "EventCount": processor.value_accumulator(int),
         }
-        
+
     def process(self, events):
-        
+
         ## Here we pre-compute a few common variables that we will re-use later and add them to the events object
 
         # Temporary patch so we can add photon and lepton four vectors. Not needed for newer versions of NanoAOD
@@ -320,10 +320,10 @@ class TTGammaProcessor(processor.ProcessorABC):
             maxParentFlatten = maxHistoryPDGID(idx, par, num)
             events["GenPart", "maxParent"] = ak.unflatten(maxParentFlatten, num)
 
-        
+
         shift_systs = [None]
         if self.isMC:
-            # Jet energy systematics 
+            # Jet energy systematics
             shift_systs += ["JESUp", "JESDown", "JERUp", "JERDown"]
 
         return processor.accumulate(self.process_shift(events, name) for name in shift_systs)
@@ -544,14 +544,15 @@ class TTGammaProcessor(processor.ProcessorABC):
         # Find all possible combinations of 3 tight jets in the events
         # Hint: using the ak.combinations(array,n) method chooses n unique items from array.
         # More hints are in the twiki
-        # triJet = ak.combinations()  # FIXME 2a
+        triJet = ak.combinations(tightJet, 3, fields=["first","second","third"])  # FIXME 2a
         # Sum together jets from the triJet object and find its pt and mass
-        # triJetPt = ().pt  # FIXME 2a
-        # triJetMass = ().mass  # FIXME 2a
+        triJetPt = (triJet.first + triJet.second + triJet.third).pt  # FIXME 2a
+        triJetMass = (triJet.first + triJet.second + triJet.third).mass  # FIXME 2a
         # define the M3 variable, the triJetMass of the combination with the highest triJetPt value
         # (ak.argmax and ak.firsts will be helpful here)
-        M3 = np.ones(len(events)) # FIXME 2a        
-        
+        highPtIdx = ak.argmax(triJetPt, axis=-1, keepdims=True)
+        M3 = triJetMass[highPtIdx]
+
         # For all the other event-level variables, we can form the variables from just
         # the leading (in pt) objects rather than form all combinations and arbitrate them
         # this is because all of our signal and control regions require exactly zero or one of them
@@ -561,12 +562,12 @@ class TTGammaProcessor(processor.ProcessorABC):
         leadingElectron = ak.firsts(tightElectrons)
         leadingPhoton = ak.firsts(tightPhotons)
         leadingPhotonLoose = ak.firsts(loosePhotons)
-        
+
         # define egammaMass, mass of leadingElectron and leadingPhoton system
         egammaMass  = (leadingElectron + leadingPhoton).mass
         # define mugammaMass analogously
-     
-        mugammaMass = leadingMuon.mass  # FIXME 2a
+
+        mugammaMass = (leadingMuon + leadingPhoton).mass  # FIXME 2a
         gammaMasses = {'electron': egammaMass, 'muon': mugammaMass }
 
         ###################
@@ -601,7 +602,7 @@ class TTGammaProcessor(processor.ProcessorABC):
                     )
                 )
                 datasetFull = "TTGamma_SingleLept_2016"
-    
+
             puWeight = puLookup[datasetFull](events.Pileup.nTrueInt)
             puWeight_Up = puLookup[datasetFull](events.Pileup.nTrueInt)  # FIXME 4
             puWeight_Down = puLookup[datasetFull](events.Pileup.nTrueInt)  # FIXME 4
@@ -814,7 +815,7 @@ class TTGammaProcessor(processor.ProcessorABC):
 
             # find the event weight to be used when filling the histograms
             weightSyst = syst
-            
+
             # in the case of 'nominal', or the jet energy systematics, no weight systematic variation is used (weightSyst=None)
             if syst in ["nominal", "JERUp", "JERDown", "JESUp", "JESDown"]:
                 weightSyst = None
