@@ -268,6 +268,7 @@ class TTGammaProcessor(processor.ProcessorABC):
             "all_photon_pt": hist.Hist(
                 dataset_axis,
                 pt_axis),
+            
             ## book histograms for photon pt, eta, and charged hadron isolation
             "photon_pt": hist.Hist(
                 dataset_axis,
@@ -276,7 +277,16 @@ class TTGammaProcessor(processor.ProcessorABC):
                 lep_axis,
                 systematic_axis,
             ),
+            
             # "photon_eta": hist.Hist(...),  # FIXME 3
+            "photon_eta":hist.Hist(
+                dataset_axis,
+                eta_axis,
+                phoCategory_axis,
+                lep_axis,
+                systematic_axis,
+            ),
+            
             "photon_chIso": hist.Hist(
                 dataset_axis,
                 chIso_axis,
@@ -865,14 +875,14 @@ class TTGammaProcessor(processor.ProcessorABC):
                 )
 
                 # fill photon_chIso histogram, using the loosePhotons array (photons passing all cuts, except the charged hadron isolation cuts)
-                output["photon_chIso"].fill(
-                    dataset=dataset,
-                    chIso=np.asarray(leadingPhotonLoose.chIso[phoselLoose]),
-                    category=np.asarray(phoCategoryLoose[phoselLoose]),
-                    lepFlavor=lepton,
-                    systematic=syst,
-                    weight=evtWeight[phoselLoose],
-                )
+                #output["photon_chIso"].fill(
+                #    dataset=dataset,
+                #    chIso=np.asarray(leadingPhotonLoose.chIso[phoselLoose]),
+                #    category=np.asarray(phoCategoryLoose[phoselLoose]),
+                #    lepFlavor=lepton,
+                #    systematic=syst,
+                #    weight=evtWeight[phoselLoose],
+                #)
 
                 # fill M3 histogram, for events passing the phosel selection
 
