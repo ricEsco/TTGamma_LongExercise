@@ -296,9 +296,9 @@ class TTGammaProcessor(processor.ProcessorABC):
             "M3": hist.Hist(
                 dataset_axis,
                 m3_axis,
-                phoCategory_axis,
-                lep_axis,
-                systematic_axis,
+                #phoCategory_axis,
+                #lep_axis,
+                #systematic_axis,
             ),
             "EventCount": processor.value_accumulator(int),
         }
@@ -855,7 +855,14 @@ class TTGammaProcessor(processor.ProcessorABC):
                     weight=evtWeight[phosel],
                 )
 
-                # output["photon_eta"].fill()  # FIXME 3
+                output["photon_eta"].fill(
+                    dataset=dataset,
+                    eta=np.asarray(leadingPhoton.eta[phosel]),
+                    category=np.asarray(phoCategory[phosel]),
+                    lepFlavor=lepton,
+                    systematic=syst,
+                    weight=evtWeight[phosel],
+                )
 
                 # fill photon_chIso histogram, using the loosePhotons array (photons passing all cuts, except the charged hadron isolation cuts)
                 output["photon_chIso"].fill(
@@ -869,21 +876,21 @@ class TTGammaProcessor(processor.ProcessorABC):
 
                 # fill M3 histogram, for events passing the phosel selection
 
-                #output["M3"].fill(
-                #    dataset=dataset,
-                #    M3=np.asarray(ak.flatten(M3[phosel])),
+                output["M3"].fill(
+                    dataset=dataset,
+                    M3=np.asarray(ak.flatten(M3[phosel])),
                 #    category=np.asarray(phoCategory[phosel]),
                 #    lepFlavor=lepton,
                 #    systematic=syst,
                 #    weight=evtWeight[phosel],
-                #)
+                )
 
             # use the selection.all() method to select events passing the eleSel or muSel selection,
             # and the 3-jet 0-btag selection, and have exactly one photon
 
-            phosel_3j0t = { 'electron': selection.all("eleSel", "jetSel_3j0b", "onePho"),
-                            'muon': selection.all("muSel", "jetSel_3j0b", "onePho")
-                           }
+            #phosel_3j0t = { 'electron': selection.all("eleSel", "jetSel_3j0b", "onePho"),
+            #                'muon': selection.all("muSel", "jetSel_3j0b", "onePho")
+            #               }
 
             #for lepton in phosel_3j0t.keys():
                 # output["photon_lepton_mass_3j0t"].fill()  # FIXME 3
