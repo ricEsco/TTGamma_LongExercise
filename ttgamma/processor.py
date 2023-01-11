@@ -197,7 +197,7 @@ def selectPhotons(photons):
     tightPhotons = photons[photonSelect & photonID]  # FIXME 1a
     # select loosePhotons, the subset of photons passing the photonSelect cut and all photonID cuts
     # except the charged hadron isolation cut applied (photonID_NoChIso)
-    loosePhotons = photons[photonSelect & photonID & ~(photonID_NoChIso)]  # FIXME 1a
+    loosePhotons = photons[photonSelect & photonID_NoChIso]  # FIXME 1a
 
     return tightPhotons, loosePhotons
 
@@ -858,15 +858,15 @@ class TTGammaProcessor(processor.ProcessorABC):
                 # output["photon_eta"].fill()  # FIXME 3
 
                 # fill photon_chIso histogram, using the loosePhotons array (photons passing all cuts, except the charged hadron isolation cuts)
+        
                 output["photon_chIso"].fill(
                     dataset=dataset,
-                    chIso=np.asarray(leadingPhotonLoose.chIso[phoselLoose]),
-                    category=np.asarray(phoCategoryLoose[phoselLoose]),
+                    chIso=np.asarray(ak.flatten(leadingPhotonLoose.chIso[phoselLoose])),
+                    category=np.asarray(ak.flatten(phoCategoryLoose[phoselLoose])),
                     lepFlavor=lepton,
                     systematic=syst,
                     weight=evtWeight[phoselLoose],
                 )
-
                 # fill M3 histogram, for events passing the phosel selection
 
                 #output["M3"].fill(
