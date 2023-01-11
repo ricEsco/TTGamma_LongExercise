@@ -96,7 +96,7 @@ def selectMuons(events):
     muonSelectTight = (
         (events.Muon.pt > 30)
         & (abs(events.Muon.eta) < 2.4)
-        & (events.Muon.tightID)
+        & (events.Muon.tightId)
         & (events.Muon.pfRelIso04_all < 0.15)
     )  # fixed
 
