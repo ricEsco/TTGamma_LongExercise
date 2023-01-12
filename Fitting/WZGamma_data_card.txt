@@ -1,0 +1,42 @@
+# Simple counting experiment, with one signal and one background
+imax 1  number of channels
+jmax *  number of backgrounds
+kmax *  number of nuisance parameters (sources of systematic uncertainty)
+
+shapes * * ../RootFiles/MisID_Output_muon.root  $PROCESS $PROCESS_$SYSTEMATIC
+
+------------
+# we have just one channel, in which we observe 0 events
+bin             wzg
+observation     -1
+------------
+# now we list the expected events for signal and all backgrounds in that bin
+# the second 'process' line must have a positive number for backgrounds, and 0 for signal.
+# the line starting with 'rate' gives the expected yield for each process.
+# Then (after the '-----'-line), we list the independent sources of uncertainties, and give their effect (syst. error)
+# on each process and bin, in this case none.
+bin                 wzg         wzg            wzg              wzg          wzg           wzg
+process             ttgamma     MisID	       NonPrompt   	WG           ZG            other
+process             0           1              2           	3            4             5
+rate                -1          -1	       -1          	-1           -1            -1
+
+lumi_2016 lnN       1.012        1.012         1.012            1.012        1.012          1.012
+muEffWeight  shape  1.           1.            1.        	1.           1.             1.
+eleEffWeight shape  1.           1.            1.        	1.           1.             1.
+ISR          shape  1.           1.            1.		1.	     1.	            1.
+FSR          shape  1.		 1.	       1.		1.	     1.	            1.
+PDF          shape  1.		 1.	       1.		1.	     1.	            1.
+Q2Scale      shape  1.		 1.	       1.		1.	     1.	            1.
+puWeight     shape  1.		 1.	       1.		1.	     1.	            1.	
+btagWeight   shape  1.		 1.	       1.		1.	     1.	            1.
+JES          shape  1.		 1. 	       1.		1.	     1.	            1.
+JER          shape  1.		 1.	       1.		1.	     1.	            1.
+
+WGSF        rateParam  wzg  WG         1.
+ZGSF        rateParam  wzg  ZG         1.
+fakerate    rateParam  wzg  NonPrompt  1.
+rp_MisIDEle rateParam  wzg  MisID      1.
+
+* autoMCStats 0 1 1
+
+------------
